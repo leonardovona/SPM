@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "barrier": "cpp",
+    "ostream": "cpp"
+  }
+}
