@@ -1,0 +1,15 @@
+# Files without extension
+*
+!/**/
+!*.*
+
+# test videos and images
+*.mp4
+*.jpg
+*.png
+
+# cmake files
+CMakeFiles/
+*.cmake
+Makefile
+CMakeCache.txt

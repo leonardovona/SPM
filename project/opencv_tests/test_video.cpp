@@ -42,7 +42,8 @@ Mat smooth(Mat frame)
       {
         for (int jj = j - 1; jj <= j + 1; jj++)
         {
-          if(ii >= 0 && ii < frame.rows && jj >= 0 && jj < frame.cols) {
+          if (ii >= 0 && ii < frame.rows && jj >= 0 && jj < frame.cols)
+          {
             value += frame.at<u_int8_t>(ii, jj);
             counter++;
           }
@@ -55,12 +56,33 @@ Mat smooth(Mat frame)
   return smoothed;
 }
 
+Mat background_picture;
+int pixels;
+
+int difference(Mat frame)
+{
+  Mat difference = background_picture - frame;
+
+  int k = 0;
+  for (int i = 0; i < difference.rows; i++)
+  {
+    for (int j = 0; j < difference.cols; j++)
+    {
+      if (difference.at<u_int8_t>(i, j) != 0)
+      {
+        k++;
+      }
+    }
+  }
+  return (k * 100 / pixels);
+}
+
 int main()
 {
 
   // Create a VideoCapture object and open the input file
   // If the input is the web camera, pass 0 instead of the video file name
-  VideoCapture vid_capture("test.mp4");
+  VideoCapture vid_capture("test_2.mp4");
 
   // Check if camera opened successfully
   if (!vid_capture.isOpened())
@@ -80,6 +102,16 @@ int main()
     int frame_count = vid_capture.get(7);
     cout << "Frame count: " << frame_count << endl;
   }
+
+  vid_capture >> background_picture;
+  if (background_picture.empty())
+  {
+    cout << "ERROR";
+    return -1;
+  }
+
+  background_picture = greyscale(smooth(background_picture));
+  pixels = background_picture.rows * background_picture.cols;
   {
     utimer u("Sequential smooth and greyscale");
     while (1)
@@ -93,7 +125,8 @@ int main()
 
       Mat greyscaled = greyscale(frame);
       Mat smoothed = smooth(greyscaled);
-
+      cout << difference(smoothed) << endl;
+      
       if (!smoothed.data)
       {
         printf("No image data \n");
@@ -103,11 +136,11 @@ int main()
       // imshow("Original", frame);
       // imshow("Greyscaled", greyscaled);
       // imshow("Smoothed", smoothed);
-
+      // imshow("Difference", difference);
       // Press  ESC on keyboard to exit
-      char c = (char)waitKey(25);
-      if (c == 27)
-        break;
+      // char c = (char)waitKey(25);
+      // if (c == 27)
+      //  break;
     }
 
     // cout << frame << endl;
