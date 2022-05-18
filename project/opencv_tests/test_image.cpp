@@ -161,66 +161,16 @@ Mat smooth(Mat frame)
 
 int main()
 {
-
-  // Create a VideoCapture object and open the input file
-  // If the input is the web camera, pass 0 instead of the video file name
-  VideoCapture vid_capture("test.mp4");
-
-  // Check if camera opened successfully
-  if (!vid_capture.isOpened())
+  Mat image;
+  image = imread("test.jpg", 1);
+  if (!image.data)
   {
-    cout << "Error opening video stream or file" << endl;
+    printf("No image data \n");
     return -1;
   }
-  else
-  {
-    // Obtain fps and frame count by get() method and print
-    // You can replace 5 with CAP_PROP_FPS as well, they are enumerations
-    int fps = vid_capture.get(5);
-    cout << "Frames per second: " << fps << endl;
-
-    // Obtain frame_count using opencv built in frame count reading method
-    // You can replace 7 with CAP_PROP_FRAME_COUNT as well, they are enumerations
-    int frame_count = vid_capture.get(7);
-    cout << "Frame count: " << frame_count << endl;
-  }
-  {
-    utimer u("Sequential smooth and greyscale");
-    while (1)
-    {
-      Mat frame;
-      // Capture frame-by-frame
-      vid_capture >> frame;
-      // If the frame is empty, break immediately
-      if (frame.empty())
-        break;
-
-      Mat greyscaled = greyscale(frame);
-      Mat smoothed = smooth(greyscaled);
-
-      if (!smoothed.data)
-      {
-        printf("No image data \n");
-        return -1;
-      }
-
-      // imshow("Original", frame);
-      // imshow("Greyscaled", greyscaled);
-      // imshow("Smoothed", smoothed);
-
-      // Press  ESC on keyboard to exit
-      char c = (char)waitKey(25);
-      if (c == 27)
-        break;
-    }
-
-    // cout << frame << endl;
-  }
-
-  vid_capture.release();
-
-  // Closes all the frames
-  destroyAllWindows();
+  namedWindow("Display Image", WINDOW_AUTOSIZE);
+  imshow("Display Image", smooth(greyscale(image)));
+  waitKey(0);
 
   return 0;
 }
