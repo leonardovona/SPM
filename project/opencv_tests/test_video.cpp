@@ -58,31 +58,46 @@ Mat smooth(Mat frame)
 
 Mat background_picture;
 int pixels;
+int k;
 
 int difference(Mat frame)
 {
   Mat difference = background_picture - frame;
 
-  int k = 0;
+  int different_pixels = 0;
   for (int i = 0; i < difference.rows; i++)
   {
     for (int j = 0; j < difference.cols; j++)
     {
       if (difference.at<u_int8_t>(i, j) != 0)
       {
-        k++;
+        different_pixels++;
       }
     }
   }
-  return (k * 100 / pixels);
+  // scale to percentage
+  return (different_pixels * 100 / pixels);
 }
 
-int main()
+bool motion_detected(Mat frame)
 {
+  return (difference(smooth(greyscale(frame))) >= k);
+}
+
+int main(int argc, char **argv)
+{
+  if (argc != 3)
+  {
+    cout << "Usage: test_video video k" << endl;
+    return -1;
+  }
+
+  string filename = argv[1];
+  k = atoi(argv[2]);
 
   // Create a VideoCapture object and open the input file
   // If the input is the web camera, pass 0 instead of the video file name
-  VideoCapture vid_capture("test_2.mp4");
+  VideoCapture vid_capture(filename);
 
   // Check if camera opened successfully
   if (!vid_capture.isOpened())
@@ -103,15 +118,19 @@ int main()
     cout << "Frame count: " << frame_count << endl;
   }
 
+  // init background picture
   vid_capture >> background_picture;
   if (background_picture.empty())
   {
     cout << "ERROR";
     return -1;
   }
+  background_picture = smooth(greyscale(background_picture));
 
-  background_picture = greyscale(smooth(background_picture));
+  // init global info
   pixels = background_picture.rows * background_picture.cols;
+
+  int number_of_frames_with_motion = 0;
   {
     utimer u("Sequential smooth and greyscale");
     while (1)
@@ -123,21 +142,22 @@ int main()
       if (frame.empty())
         break;
 
-      Mat greyscaled = greyscale(frame);
-      Mat smoothed = smooth(greyscaled);
-      cout << difference(smoothed) << endl;
-      
-      if (!smoothed.data)
+      // Mat greyscaled = greyscale(frame);
+      // Mat smoothed = smooth(greyscaled);
+      //  motion_detected(smoothed);
+      if(motion_detected(frame)) number_of_frames_with_motion++;
+      // Mat difference = smoothed - background_picture;
+      /*if (!smoothed.data)
       {
         printf("No image data \n");
         return -1;
-      }
+      }*/
 
       // imshow("Original", frame);
       // imshow("Greyscaled", greyscaled);
       // imshow("Smoothed", smoothed);
       // imshow("Difference", difference);
-      // Press  ESC on keyboard to exit
+      //  Press  ESC on keyboard to exit
       // char c = (char)waitKey(25);
       // if (c == 27)
       //  break;
@@ -146,6 +166,7 @@ int main()
     // cout << frame << endl;
   }
 
+  cout << number_of_frames_with_motion << endl;
   vid_capture.release();
 
   // Closes all the frames
