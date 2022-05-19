@@ -78,35 +78,125 @@ int difference(Mat frame)
   return (different_pixels * 100 / pixels) >= k;
 }
 
-int main(int argc, char **argv)
+string filename;
+
+void test_greyscale()
 {
-  if (argc != 2)
-  {
-    cout << "Usage: test_timings video" << endl;
-    return -1;
-  }
-
-  string filename = argv[1];
-
-  // Create a VideoCapture object and open the input file
-  // If the input is the web camera, pass 0 instead of the video file name
   VideoCapture vid_capture(filename);
 
   // Check if camera opened successfully
   if (!vid_capture.isOpened())
   {
     cout << "Error opening video stream or file" << endl;
-    return -1;
+    return;
   }
 
-  // init background picture
-  vid_capture >> background_picture;
+  Mat frame;
+  vid_capture >> frame;
+
+  if (frame.empty())
+  {
+    return;
+  }
+
+  {
+    utimer u("[OUT] Greyscaling time");
+    greyscale(frame);
+  }
+
+  vid_capture.release();
+
+  return;
+}
+
+void test_smooth()
+{
+  VideoCapture vid_capture(filename);
+
+  // Check if camera opened successfully
+  if (!vid_capture.isOpened())
+  {
+    cout << "Error opening video stream or file" << endl;
+    return;
+  }
 
   Mat frame;
+  vid_capture >> frame;
+
+  if (frame.empty())
+  {
+    return;
+  }
+
+  Mat greyscaled = greyscale(frame);
+
+  {
+    utimer u("[OUT] Smooth time");
+    smooth(greyscaled);
+  }
+
+  vid_capture.release();
+
+  return;
+}
+
+void test_difference()
+{
+  VideoCapture vid_capture(filename);
+
+  // Check if camera opened successfully
+  if (!vid_capture.isOpened())
+  {
+    cout << "Error opening video stream or file" << endl;
+    return;
+  }
+
+  Mat frame;
+  vid_capture >> background_picture;
+
+  if (background_picture.empty())
+  {
+    return;
+  }
+
+  vid_capture >> frame;
+
+  if (frame.empty())
+  {
+    return;
+  }
+
+  background_picture = smooth(greyscale(background_picture));
+  Mat smoothed = smooth(greyscale(frame));
+  k = 10;
+  pixels = background_picture.rows * background_picture.cols;
+
+  {
+    utimer u("[OUT] Detect motion");
+    difference(smoothed);
+  }
+
+  vid_capture.release();
+
+  return;
+}
+
+void test_frame_capture_single()
+{
+  VideoCapture vid_capture(filename);
+
+  // Check if camera opened successfully
+  if (!vid_capture.isOpened())
+  {
+    cout << "Error opening video stream or file" << endl;
+    return;
+  }
 
   int i = 0;
   long us;
   long total;
+  Mat frame;
+
   while (1)
   {
     {
@@ -120,41 +210,63 @@ int main(int argc, char **argv)
     total += us;
     i++;
   }
-  cout << "Average frame capture time: " << (total / i) << endl;
+  cout << "[OUT] Average frame capture single time: " << (total / i) << endl;
 
-  /*
-  if (background_picture.empty())
+  return;
+}
+
+void test_frame_capture_complete()
+{
+  VideoCapture vid_capture(filename);
+
+  // Check if camera opened successfully
+  if (!vid_capture.isOpened())
   {
-    cout << "ERROR";
+    cout << "Error opening video stream or file" << endl;
+    return;
+  }
+
+  int frame_count = vid_capture.get(7);
+
+  int i = 0;
+  long us;
+  long total;
+  Mat frame;
+  {
+    utimer u("Frame capture complete", &us);
+    while (1)
+    {
+      vid_capture >> frame;
+      if (frame.empty())
+      {
+        break;
+      }
+    }
+  }
+  cout << "[OUT] Average frame capture complete time: " << (us / frame_count) << endl;
+
+  return;
+}
+
+int main(int argc, char **argv)
+{
+  if (argc != 2)
+  {
+    cout << "Usage: test_timings video" << endl;
     return -1;
   }
-  */
-  /*
-    {
-       utimer u("Greyscaling time");
-       greyscale(background_picture);
-     }
-  */
 
-  // Mat greyscaled = greyscale(background_picture);
-  /*
-  {
-    utimer u("Smooth time");
-    smooth(greyscaled);
-  }
-  */
+  filename = argv[1];
 
-  /*
-  background_picture = smooth(greyscaled);
-  Mat smoothed = smooth(greyscale(frame));
-  k = 10;
-  pixels = background_picture.rows * background_picture.cols;
-  {
-    utimer u("Detect motion");
-    difference(smoothed);
-  }
-  */
-  vid_capture.release();
+  test_greyscale();
+
+  test_smooth();
+
+  test_difference();
+
+  test_frame_capture_single();
+
+  test_frame_capture_complete();
 
   return 0;
 }
