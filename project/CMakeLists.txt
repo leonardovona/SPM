@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 2.8)
+project( sequential_with_queue )
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+add_executable( sequential_with_queue sequential_with_queue.cpp )
+target_link_libraries( sequential_with_queue ${OpenCV_LIBS} )
+set(CMAKE_CXX_FLAGS "-O3")

@@ -105,6 +105,7 @@ int main(int argc, char **argv)
     cout << "Error opening video stream or file" << endl;
     return -1;
   }
+  /*
   else
   {
     // Obtain fps and frame count by get() method and print
@@ -117,6 +118,7 @@ int main(int argc, char **argv)
     int frame_count = vid_capture.get(7);
     cout << "Frame count: " << frame_count << endl;
   }
+  */
 
   // init background picture
   vid_capture >> background_picture;
@@ -131,39 +133,20 @@ int main(int argc, char **argv)
   pixels = background_picture.rows * background_picture.cols;
 
   int number_of_frames_with_motion = 0;
+  Mat frame;
   {
     utimer u("Sequential motion detection");
     while (1)
     {
-      Mat frame;
-      // Capture frame-by-frame
+      
       vid_capture >> frame;
       // If the frame is empty, break immediately
       if (frame.empty())
         break;
 
-      // Mat greyscaled = greyscale(frame);
-      // Mat smoothed = smooth(greyscaled);
-      //  motion_detected(smoothed);
       if(motion_detected(frame)) number_of_frames_with_motion++;
-      // Mat difference = smoothed - background_picture;
-      /*if (!smoothed.data)
-      {
-        printf("No image data \n");
-        return -1;
-      }*/
-
-      // imshow("Original", frame);
-      // imshow("Greyscaled", greyscaled);
-      // imshow("Smoothed", smoothed);
-      // imshow("Difference", difference);
-      //  Press  ESC on keyboard to exit
-      // char c = (char)waitKey(25);
-      // if (c == 27)
-      //  break;
     }
 
-    // cout << frame << endl;
   }
 
   cout << number_of_frames_with_motion << endl;

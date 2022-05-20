@@ -4,6 +4,7 @@
 #include <chrono>
 #include "utimer.cpp"
 #include <algorithm>
+#include <queue>
 
 using namespace std;
 using namespace cv;
@@ -81,7 +82,56 @@ int difference(Mat frame)
 
 bool motion_detected(Mat frame)
 {
+  // cout << difference(smooth(greyscale(frame))) << endl;
   return (difference(smooth(greyscale(frame))) >= k);
+}
+
+queue<Mat> frames_queue;
+VideoCapture vid_capture;
+
+void read_frames()
+{
+  while (true)
+  {
+    Mat frame;
+    vid_capture >> frame;
+    // If the frame is empty, break immediately
+    frames_queue.push(frame);
+    if (frame.empty())
+      break;
+  }
+  return;
+}
+
+int number_of_frames_with_motion = 0;
+
+void handle_frames()
+{
+  {
+    utimer u("handle");
+    Mat frame;
+    while (true)
+    {
+      if (!frames_queue.empty())
+      {
+        frame = frames_queue.front();
+        frames_queue.pop();
+
+        if (frame.empty())
+          break;
+
+        if (motion_detected(frame))
+          number_of_frames_with_motion++;
+        //cout << number_of_frames_with_motion << endl;
+      }
+      else
+      {
+        //this_thread::sleep_for(chrono::nanoseconds(1));
+        asm("nop;");
+      }
+    }
+  }
+  return;
 }
 
 int main(int argc, char **argv)
@@ -97,7 +147,7 @@ int main(int argc, char **argv)
 
   // Create a VideoCapture object and open the input file
   // If the input is the web camera, pass 0 instead of the video file name
-  VideoCapture vid_capture(filename);
+  vid_capture = VideoCapture(filename);
 
   // Check if camera opened successfully
   if (!vid_capture.isOpened())
@@ -105,6 +155,7 @@ int main(int argc, char **argv)
     cout << "Error opening video stream or file" << endl;
     return -1;
   }
+  /*
   else
   {
     // Obtain fps and frame count by get() method and print
@@ -117,6 +168,7 @@ int main(int argc, char **argv)
     int frame_count = vid_capture.get(7);
     cout << "Frame count: " << frame_count << endl;
   }
+  */
 
   // init background picture
   vid_capture >> background_picture;
@@ -130,41 +182,17 @@ int main(int argc, char **argv)
   // init global info
   pixels = background_picture.rows * background_picture.cols;
 
-  int number_of_frames_with_motion = 0;
+  thread read_thread = thread(read_frames);
+  thread handle_thread = thread(handle_frames);
+  read_thread.join();
+  handle_thread.join();
+
+  /*read_frames();
+
   {
     utimer u("Sequential motion detection");
-    while (1)
-    {
-      Mat frame;
-      // Capture frame-by-frame
-      vid_capture >> frame;
-      // If the frame is empty, break immediately
-      if (frame.empty())
-        break;
-
-      // Mat greyscaled = greyscale(frame);
-      // Mat smoothed = smooth(greyscaled);
-      //  motion_detected(smoothed);
-      if(motion_detected(frame)) number_of_frames_with_motion++;
-      // Mat difference = smoothed - background_picture;
-      /*if (!smoothed.data)
-      {
-        printf("No image data \n");
-        return -1;
-      }*/
-
-      // imshow("Original", frame);
-      // imshow("Greyscaled", greyscaled);
-      // imshow("Smoothed", smoothed);
-      // imshow("Difference", difference);
-      //  Press  ESC on keyboard to exit
-      // char c = (char)waitKey(25);
-      // if (c == 27)
-      //  break;
-    }
-
-    // cout << frame << endl;
-  }
+    handle_frames();
+  }*/
 
   cout << number_of_frames_with_motion << endl;
   vid_capture.release();
