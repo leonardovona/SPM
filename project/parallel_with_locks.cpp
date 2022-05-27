@@ -5,6 +5,9 @@
 #include "utimer.cpp"
 #include <algorithm>
 #include <queue>
+#include <vector>
+#include <atomic>
+#include "sharedQueue.cpp"
 
 using namespace std;
 using namespace cv;
@@ -82,68 +85,77 @@ int difference(Mat frame)
 
 bool motion_detected(Mat frame)
 {
-  // cout << difference(smooth(greyscale(frame))) << endl;
   return (difference(smooth(greyscale(frame))) >= k);
 }
 
-queue<Mat> frames_queue;
 VideoCapture vid_capture;
 
+int nw;
+//vector<sharedQueue<Mat>> frames_queues;
+vector<sharedQueue<Mat>> frames_queues(4);
 void read_frames()
 {
-  while (true)
   {
-    Mat frame;
-    vid_capture >> frame;
-    // If the frame is empty, break immediately
-    frames_queue.push(frame);
-    if (frame.empty())
-      break;
+    utimer u("read");
+    int index = 0;
+    int i = 0;
+    while (true)
+    {
+      Mat frame;
+      vid_capture >> frame;
+
+      if (frame.empty())
+      {
+        for (int i = 0; i < nw; i++)
+        {
+          frames_queues.at(i).push(frame);
+        }
+        break;
+      }
+      frames_queues.at(index).push(frame);
+
+      index = (index + 1) % nw;
+    }
   }
   return;
 }
 
-int number_of_frames_with_motion = 0;
+atomic<int> number_of_frames_with_motion;
 
-void handle_frames()
+void handle_frames(int worker_number)
 {
   {
     utimer u("handle");
+
+    int local_counter = 0;
     Mat frame;
+
     while (true)
     {
-      if (!frames_queue.empty())
-      {
-        frame = frames_queue.front();
-        frames_queue.pop();
+      frame = frames_queues.at(worker_number).pop();
+      //cout << frames_queue.size() << endl;
+      if (frame.empty())
+        break;
 
-        if (frame.empty())
-          break;
-
-        if (motion_detected(frame))
-          number_of_frames_with_motion++;
-        //cout << number_of_frames_with_motion << endl;
-      }
-      else
-      {
-        //this_thread::sleep_for(chrono::nanoseconds(1));
-        asm("nop;");
-      }
+      if (motion_detected(frame))
+        local_counter++;
     }
+    number_of_frames_with_motion += local_counter;
   }
   return;
 }
 
 int main(int argc, char **argv)
 {
-  if (argc != 3)
+  if (argc != 4)
   {
-    cout << "Usage: test_video video k" << endl;
+    cout << "Usage: test_video video k nw" << endl;
     return -1;
   }
 
   string filename = argv[1];
   k = atoi(argv[2]);
+  nw = atoi(argv[3]);
 
   // Create a VideoCapture object and open the input file
   // If the input is the web camera, pass 0 instead of the video file name
@@ -155,20 +167,6 @@ int main(int argc, char **argv)
     cout << "Error opening video stream or file" << endl;
     return -1;
   }
-  /*
-  else
-  {
-    // Obtain fps and frame count by get() method and print
-    // You can replace 5 with CAP_PROP_FPS as well, they are enumerations
-    int fps = vid_capture.get(5);
-    cout << "Frames per second: " << fps << endl;
-
-    // Obtain frame_count using opencv built in frame count reading method
-    // You can replace 7 with CAP_PROP_FRAME_COUNT as well, they are enumerations
-    int frame_count = vid_capture.get(7);
-    cout << "Frame count: " << frame_count << endl;
-  }
-  */
 
   // init background picture
   vid_capture >> background_picture;
@@ -182,23 +180,29 @@ int main(int argc, char **argv)
   // init global info
   pixels = background_picture.rows * background_picture.cols;
 
-  thread read_thread = thread(read_frames);
-  thread handle_thread = thread(handle_frames);
-  read_thread.join();
-  handle_thread.join();
+  number_of_frames_with_motion = 0;
 
-  /*read_frames();
+  //vector<sharedQueue<Mat>> queues(nw);
+  //frames_queues = queues;
 
+  vector<thread> tids;
+  for (int i = 0; i < nw; i++)
   {
-    utimer u("Sequential motion detection");
-    handle_frames();
-  }*/
+    tids.push_back(thread(handle_frames, i));
+  }
+
+  thread read_thread = thread(read_frames);
+
+  read_thread.join();
+  cout << number_of_frames_with_motion << endl;
+
+  for (thread &t : tids)
+  { // await thread termination
+    t.join();
+  }
 
   cout << number_of_frames_with_motion << endl;
   vid_capture.release();
-
-  // Closes all the frames
-  destroyAllWindows();
 
   return 0;
 }
