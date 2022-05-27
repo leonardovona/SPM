@@ -57,7 +57,6 @@ int k;
 int difference(Mat frame)
 {
   Mat difference = background_picture - frame;
-
   int different_pixels = 0;
   for (int i = 0; i < difference.rows; i++)
   {
@@ -70,6 +69,7 @@ int difference(Mat frame)
     }
   }
   // scale to percentage
+  cout << (different_pixels * 100 / pixels) << endl;
   return (different_pixels * 100 / pixels);
 }
 

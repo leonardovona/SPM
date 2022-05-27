@@ -17,7 +17,7 @@ private:
 
     if (background_picture.empty())
     {
-      // THROW EXCEPTION
+      throw "The video file is empty";
     }
 
     background_picture = smooth(greyscale(background_picture));
@@ -85,19 +85,19 @@ private:
         }
       }
     }
+    
     // scale to percentage
     return (different_pixels * 100 / pixels);
   }
 
 public:
-  MotionDetector(string filename, int k)
+  MotionDetector(string filename, int k): k(k)
   {
     vid_capture = VideoCapture(filename);
     if (!vid_capture.isOpened())
     {
-      // THROW EXCEPTION
+      throw "Unable to open video file";
     }
-    k = k; // CHECK
 
     init_background_picture();
 

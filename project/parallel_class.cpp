@@ -31,7 +31,6 @@ void read_frames(MotionDetector motion_detector, int nw)
       for (int i = 0; i < nw; i++)
       {
         frames_queues.at(i).push(frame);
-        cout << "EOS " << i << " " << frames_queues.at(index).size() << endl;
       }
       break;
     }
@@ -86,15 +85,16 @@ int main(int argc, char **argv)
   int k = atoi(argv[2]);
   int nw = atoi(argv[3]);
 
-  MotionDetector motion_detector(filename, k);
-
-  number_of_frames_with_motion = 0;
-
-  frames_queues.resize(nw);
-
+  try
   {
     utimer u("Parallel");
+
+    MotionDetector motion_detector(filename, k);
     vector<thread> tids;
+
+    number_of_frames_with_motion = 0;
+
+    frames_queues.resize(nw);
 
     tids.push_back(thread(read_frames, motion_detector, nw));
 
@@ -107,6 +107,11 @@ int main(int argc, char **argv)
     { // await thread termination
       t.join();
     }
+  }
+  catch (Exception e)
+  {
+    cerr << e.what() << endl;
+    return -1;
   }
 
   cout << number_of_frames_with_motion << endl;
