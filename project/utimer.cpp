@@ -34,7 +34,7 @@ public:
     auto musec =
       std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
     
-    std::cout << message << " computed in " << musec << "\t usec " 
+    std::cout << message << " computed in " << musec << " usec " 
 	      << std::endl;
     if(us_elapsed != NULL)
       (*us_elapsed) = musec;
