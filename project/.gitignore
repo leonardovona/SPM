@@ -8,6 +8,10 @@
 *.jpg
 *.png
 
+*.ods
+*_timings.txt
+tests/
+
 # cmake files
 CMakeFiles/
 *.cmake

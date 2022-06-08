@@ -1,9 +1,7 @@
 #include "opencv2/opencv.hpp"
 #include <iostream>
 #include <thread>
-#include <chrono>
 #include "utimer.cpp"
-#include <algorithm>
 #include <queue>
 #include <vector>
 #include <atomic>
@@ -94,7 +92,7 @@ int main(int argc, char **argv)
 {
   if (argc != 4)
   {
-    cout << "Usage: parallel_av video k nw" << endl;
+    cout << "Usage: pthread_av video k nw" << endl;
     return -1;
   }
 
@@ -114,16 +112,17 @@ int main(int argc, char **argv)
     return -1;
   }
 
+  vector<thread> tids;
+
+  number_of_frames_with_motion = 0;
+
+  frames_queues.resize(nw - 1);
+
   try
   {
-    utimer u("Parallel motion detection");
+    utimer u("Pthread motion detection");
 
     motion_detector = make_unique<MotionDetector>(filename, k);
-    vector<thread> tids;
-
-    number_of_frames_with_motion = 0;
-
-    frames_queues.resize(nw - 1);
 
     tids.push_back(thread(read_frames, nw - 1));
 
