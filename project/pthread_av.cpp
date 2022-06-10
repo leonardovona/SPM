@@ -29,27 +29,31 @@ auto pin_thread = [](int worker_number)
 
 void read_frames(int nw)
 {
-  pin_thread(0);
-  int index = 0;
-  int i = 0;
-
-  while (true)
   {
-    Mat frame = motion_detector->get_frame();
+    utimer u("Emitter");
 
-    // If the frame is empty, break immediately
-    if (frame.empty())
+    pin_thread(0);
+    int index = 0;
+    int i = 0;
+
+    while (true)
     {
-      // send EOSes
-      for (int i = 0; i < nw; i++)
-      {
-        frames_queues.at(i).push(frame);
-      }
-      break;
-    }
-    frames_queues.at(index).push(frame);
+      Mat frame = motion_detector->get_frame();
 
-    index = (index + 1) % nw;
+      // If the frame is empty, break immediately
+      if (frame.empty())
+      {
+        // send EOSes
+        for (int i = 0; i < nw; i++)
+        {
+          frames_queues.at(i).push(frame);
+        }
+        break;
+      }
+      frames_queues.at(index).push(frame);
+
+      index = (index + 1) % nw;
+    }
   }
   return;
 }
@@ -58,11 +62,13 @@ atomic<int> number_of_frames_with_motion;
 
 void handle_frames(int worker_number)
 {
+  //long total_time = 0;
   pin_thread(worker_number + 1);
+  queue<Mat> *frames_queue = &frames_queues.at(worker_number);
+  int local_counter = 0;
+  Mat frame;
   {
-    queue<Mat> *frames_queue = &frames_queues.at(worker_number);
-    int local_counter = 0;
-    Mat frame;
+    utimer u("Worker " + to_string(worker_number));
 
     while (true)
     {
@@ -75,16 +81,21 @@ void handle_frames(int worker_number)
         {
           break;
         }
+        //auto start = std::chrono::high_resolution_clock::now();
         if (motion_detector->motion_detected(frame))
           local_counter++;
+        //auto elapsed = std::chrono::high_resolution_clock::now() - start;
+        //total_time += chrono::duration_cast<chrono::microseconds>(elapsed).count();
       }
       else
       {
         asm("nop;");
       }
     }
-    number_of_frames_with_motion += local_counter;
   }
+
+  //cout << total_time << " worker " << worker_number << endl;
+  number_of_frames_with_motion += local_counter;
   return;
 }
 
