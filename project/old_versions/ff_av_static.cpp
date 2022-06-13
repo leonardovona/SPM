@@ -13,7 +13,7 @@ using namespace std;
 using namespace cv;
 using namespace ff;
 
-int nw;
+int pardegree;
 atomic<int> number_of_frames_with_motion;
 unique_ptr<MotionDetector> motion_detector;
 
@@ -64,21 +64,21 @@ int main(int argc, char **argv)
 {
   if (argc != 4)
   {
-    cout << "Usage: ff_av video k nw" << endl;
+    cout << "Usage: ff_av video k pardegree" << endl;
     return -1;
   }
 
   string filename = argv[1];
   int k = atoi(argv[2]);
-  nw = atoi(argv[3]);
+  pardegree = atoi(argv[3]);
 
-  if (nw < 2)
+  if (pardegree < 2)
   {
     cout << "At least 2 concurrent activities are needed" << endl;
     return -1;
   }
 
-  if (nw > thread::hardware_concurrency())
+  if (pardegree > thread::hardware_concurrency())
   {
     cout << "At most " << thread::hardware_concurrency() << " concurrent activities are allowed" << endl;
     return -1;
@@ -89,14 +89,13 @@ int main(int argc, char **argv)
   Emitter emitter;
   vector<unique_ptr<ff_node>> workers;
 
-  for (int i = 0; i < nw - 1; i++)
+  for (int i = 0; i < pardegree - 1; i++)
   {
     workers.push_back(make_unique<Worker>());
   }
 
   ff_Farm<> farm(move(workers), emitter);
   farm.remove_collector();
-  farm.set_scheduling_ondemand();
 
   try
   {

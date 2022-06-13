@@ -11,6 +11,7 @@
 *.ods
 *_timings.txt
 tests/
+remote_tests/
 
 # cmake files
 CMakeFiles/

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-VIDEOS=( test_2_270 test_2_360 test_2_720 test_2_1080 )
-EXECUTABLES=( sequential pthread ff )
+VIDEOS=( test_2_270 test_2_360 test_2_720 )
+EXECUTABLES=( pthread )
 
 for EXECUTABLE in "${EXECUTABLES[@]}"
 do
@@ -13,12 +13,12 @@ do
 		do
 			:
 			if [[ "${EXECUTABLE}" == "sequential" ]]; then
-				./${EXECUTABLE}_av ./opencv_tests/video_tests/${VIDEO}.mp4 45 | grep computed >> ./tests/${EXECUTABLE}_${VIDEO}.txt #| awk '{print $6}'
+				./${EXECUTABLE}_motion_detection ../video_tests/${VIDEO}.mp4 45 | grep computed | awk '{print $6}' >> ./tests/${EXECUTABLE}_${VIDEO}.txt
 			else
-				for((J=2;J<=4;J*=2))
+				for((J=2;J<=32;J*=2))
 				do
 					:
-					./${EXECUTABLE}_av ./opencv_tests/video_tests/${VIDEO}.mp4 45 ${J} | grep computed >> ./tests/${EXECUTABLE}_${VIDEO}_${J}.txt #| awk '{print $6}'
+					./${EXECUTABLE}_motion_detection ../video_tests/${VIDEO}.mp4 45 ${J} | grep computed | awk '{print $6}' >> ./tests/${EXECUTABLE}_${VIDEO}_${J}.txt
 				done
 			fi
 		done
