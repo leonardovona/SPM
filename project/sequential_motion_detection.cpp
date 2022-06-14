@@ -64,7 +64,7 @@ int main(int argc, char **argv)
   }
 
   // Print the final result
-  cout << number_of_frames_with_motion << endl;
+  cout << "Number of frames with motion detected: " << number_of_frames_with_motion << endl;
 
   return 0;
 }
