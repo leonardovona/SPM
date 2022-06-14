@@ -3,14 +3,14 @@
 !/**/
 !*.*
 
-# test videos and images
+# test videos
 *.mp4
-*.jpg
-*.png
+video_tests/
 
-*.ods
-*_timings.txt
-tests/
+tests/balance/
+tests/single_step/
+tests/speedup/
+tests/static_dynamic_comparison/
 remote_tests/
 
 # cmake files
