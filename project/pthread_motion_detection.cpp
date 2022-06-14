@@ -26,6 +26,9 @@ vector<queue<Mat>> frames_queues;
 // Motion detector utility
 unique_ptr<MotionDetector> motion_detector;
 
+// Global state containing the overall counter of frames with motion
+atomic<int> number_of_frames_with_motion;
+
 // Utility to pin a thread to a specific core
 // target: target core
 auto pin_thread = [](int target)
@@ -82,9 +85,6 @@ void read_frames(int nw)
   return;
 }
 
-// Global state containing the overall counter of frames with motion
-atomic<int> number_of_frames_with_motion;
-
 // Function executed by the workers
 // worker_number: index of the worker
 void handle_frames(int worker_number)
@@ -111,7 +111,7 @@ void handle_frames(int worker_number)
       frames_queue->pop();
 
       // EOS
-      if (frame.empty()) 
+      if (frame.empty())
       {
         break;
       }
@@ -140,52 +140,67 @@ int main(int argc, char **argv)
     return -1;
   }
 
+  // Path to the input video file
   string filename = argv[1];
+
+  // Treshold to declare a frame with motion or not
   int k = atoi(argv[2]);
+
+  // Parallelism degree
   int pardegree = atoi(argv[3]);
 
+  // Pardegree must be at least 2 (emitter and 1 worker)
   if (pardegree < 2)
   {
     cout << "At least 2 concurrent activities are needed" << endl;
     return -1;
   }
 
+  // Pardegree must be at most as the cores available on the machine
   if (pardegree > thread::hardware_concurrency())
   {
     cout << "At most " << thread::hardware_concurrency() << " concurrent activities are allowed" << endl;
     return -1;
   }
 
-  vector<thread> tids;
-
+  // Init the global shared state
   number_of_frames_with_motion = 0;
-
-  frames_queues.resize(pardegree - 1);
 
   try
   {
     utimer u("Pthread motion detection");
 
+    // Vector containing threads references
+    vector<thread> tids;
+
+    // Instantiate the queues for the workers
+    frames_queues.resize(pardegree - 1);
+
+    // Init motion detector utility
     motion_detector = make_unique<MotionDetector>(filename, k);
 
+    // Start emitter, informing there are (pardegree - 1) workers
     tids.push_back(thread(read_frames, pardegree - 1));
 
+    // Start (pardegree - 1) workers
     for (int i = 0; i < pardegree - 1; i++)
     {
       tids.push_back(thread(handle_frames, i));
     }
 
+    // Await threads termination
     for (thread &t : tids)
-    { // await thread termination
+    { 
       t.join();
     }
   }
-  catch (Exception e)
+  catch (Exception e) // Error during acquisition of frames from the video
   {
     cerr << e.what() << endl;
     return -1;
   }
 
+  // Print the final result
   cout << number_of_frames_with_motion << endl;
 
   return 0;

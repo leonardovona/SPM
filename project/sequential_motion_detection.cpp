@@ -63,6 +63,7 @@ int main(int argc, char **argv)
     return -1;
   }
 
+  // Print the final result
   cout << number_of_frames_with_motion << endl;
 
   return 0;

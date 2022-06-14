@@ -1,7 +1,7 @@
 #!/bin/bash
 
-VIDEOS=( test_2_270 test_2_360 test_2_720 )
-EXECUTABLES=( pthread )
+VIDEOS=( test_1_720 ) #test_1_720 test_2_270 test_2_360 test_2_720 test_3_1080 test_4_720 test_5_1080 )
+EXECUTABLES=( sequential pthread ff )
 
 for EXECUTABLE in "${EXECUTABLES[@]}"
 do
