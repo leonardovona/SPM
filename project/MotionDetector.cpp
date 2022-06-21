@@ -53,6 +53,7 @@ private:
     for (int i = 0; i < frame.rows; i++)
     {
       // For all the columns of the input frame
+      #pragma GCC unroll 8
       for (int j = 0; j < frame.cols; j++)
       {
         // Accumulator
@@ -86,6 +87,7 @@ private:
     for (int i = 0; i < frame.rows; i++)
     {
       // For all the columns of the input frame
+      #pragma GCC unroll 8
       for (int j = 0; j < frame.cols; j++)
       {
         // Reset the counter
@@ -131,6 +133,7 @@ private:
     // For all the rows and columns
     for (int i = 0; i < difference.rows; i++)
     {
+      #pragma GCC unroll 8
       for (int j = 0; j < difference.cols; j++)
       {
         // If the value of the pixel is not zero, the frame and the background picture differ at the given pixel
