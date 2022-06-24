@@ -15,8 +15,8 @@ FastFlow parallel version of motion detection
 
 #include <ff/ff.hpp>
 
-#include "utimer.cpp"
-#include "MotionDetector.cpp"
+#include "utils/utimer.cpp"
+#include "utils/MotionDetector.cpp"
 
 using namespace std;
 using namespace cv;

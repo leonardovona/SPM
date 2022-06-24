@@ -14,8 +14,8 @@ Pthread parallel version of motion detection
 #include <vector>
 #include <atomic>
 
-#include "utimer.cpp"
-#include "MotionDetector.cpp"
+#include "utils/utimer.cpp"
+#include "utils/MotionDetector.cpp"
 
 using namespace std;
 using namespace cv;
