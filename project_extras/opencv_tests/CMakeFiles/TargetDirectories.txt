@@ -1,6 +1,0 @@
-/home/leonardo/Code/SPM/project/opencv_tests/CMakeFiles/test_video.dir
-/home/leonardo/Code/SPM/project/opencv_tests/CMakeFiles/test_image.dir
-/home/leonardo/Code/SPM/project/opencv_tests/CMakeFiles/test_video_alt.dir
-/home/leonardo/Code/SPM/project/opencv_tests/CMakeFiles/test_timings.dir
-/home/leonardo/Code/SPM/project/opencv_tests/CMakeFiles/edit_cache.dir
-/home/leonardo/Code/SPM/project/opencv_tests/CMakeFiles/rebuild_cache.dir
