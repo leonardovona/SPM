@@ -1,2 +1,2 @@
 # SPM
-SPM assignments, lab activies and project
+Parallel and Distributed Systems: Paradigms and Models (SPM) assignments and project
